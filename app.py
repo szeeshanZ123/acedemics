@@ -346,7 +346,7 @@ def login():
             flash(f"Welcome, {student_info['Name']}!", "success")
             return redirect(url_for("student_dashboard"))
 
-    return render_template("login.html", initial_role=initial_role, page_title="Academic Intelligence | Login")
+    return render_template("login.html", initial_role=initial_role, page_title="EduSync | Login")
 
 
 # =========================================================
@@ -393,7 +393,7 @@ def teacher_login():
         flash(f"Welcome, {teacher_info['Teacher_Name']}!", "success")
         return redirect(url_for("teacher_dashboard"))
 
-    return render_template("login.html", initial_role="teacher", page_title="Academic Intelligence | Teacher Login")
+    return render_template("login.html", initial_role="teacher", page_title="EduSync | Teacher Login")
 
 
 @app.route("/teacher")

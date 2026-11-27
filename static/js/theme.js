@@ -1,5 +1,5 @@
 /**
- * Academic Intelligence — Theme Management Engine
+ * EduSync — Theme Management Engine
  * Handles Light/Dark mode toggling, localStorage persistence,
  * and dynamic Chart.js theme adaptation.
  */

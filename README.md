@@ -1,7 +1,7 @@
 Markdown
 <div align="center">
 
-# 🎓 Academic Performance & Examination Intelligence System
+# 🎓 EduSync Academic Performance & Exam Intelligence System
 
 ### *Turn Everyday Marks into Smart Academic Insights*
 
