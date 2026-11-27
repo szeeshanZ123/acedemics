@@ -1,0 +1,303 @@
+"""Load and combine multi-file academic dataset (students, marks, attendance, teacher).
+
+Provides clean data accessors and helper methods for dashboard analytics and student profile pages.
+"""
+
+from pathlib import Path
+import pandas as pd
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+# Semester to Subjects Mapping derived from dataset
+SEMESTER_SUBJECTS = {
+    1: ["Python Programming", "Mathematics I", "Communication Skills", "Digital Electronics"],
+    2: ["Data Structures", "Database Management Systems", "Statistics", "Web Development"],
+    3: ["Python for Data Analytics", "Operating Systems", "Computer Networks", "Software Engineering"],
+    4: ["Java Programming", "Data Visualization", "Cloud Computing", "Artificial Intelligence"],
+    5: ["Machine Learning", "Cyber Security", "Big Data Analytics", "Business Intelligence"],
+    6: ["Deep Learning", "Data Science", "Major Project", "Professional Ethics"]
+}
+
+# In-memory caching for performance optimization without complex external dependencies
+_DATA_CACHE = None
+_ADMIN_CACHE = None
+
+def load_data(force_reload=False):
+    """Load admin, student, marks, and attendance datasets with normalized types."""
+    global _DATA_CACHE
+    if _DATA_CACHE is not None and not force_reload:
+        admin_df, students, marks_df, attendance_df, subject_combined = _DATA_CACHE
+        return admin_df.copy(), students.copy(), marks_df.copy(), attendance_df.copy(), subject_combined.copy()
+
+    admin_df = pd.read_csv(DATA_DIR / "admin.csv")
+    student_df = pd.read_csv(DATA_DIR / "students.csv")
+    marks_df = pd.read_csv(DATA_DIR / "marks.csv")
+    attendance_df = pd.read_csv(DATA_DIR / "attendance.csv")
+
+    # Safe type normalization
+    student_df["Roll_No"] = student_df["Roll_No"].astype(str).str.strip()
+    student_df["Semester"] = pd.to_numeric(student_df["Semester"], errors="coerce").fillna(1).astype(int)
+
+    marks_df["Roll_No"] = marks_df["Roll_No"].astype(str).str.strip()
+    marks_df["Semester"] = pd.to_numeric(marks_df["Semester"], errors="coerce").fillna(1).astype(int)
+    marks_df["Subject"] = marks_df["Subject"].astype(str).str.strip()
+    marks_df["Total"] = pd.to_numeric(marks_df["Total"], errors="coerce").fillna(0)
+    marks_df["Internal"] = pd.to_numeric(marks_df["Internal"], errors="coerce").fillna(0)
+    marks_df["External"] = pd.to_numeric(marks_df["External"], errors="coerce").fillna(0)
+
+    attendance_df["Roll_No"] = attendance_df["Roll_No"].astype(str).str.strip()
+    attendance_df["Semester"] = pd.to_numeric(attendance_df["Semester"], errors="coerce").fillna(1).astype(int)
+    attendance_df["Subject"] = attendance_df["Subject"].astype(str).str.strip()
+    attendance_df["Attendance"] = pd.to_numeric(attendance_df["Attendance"], errors="coerce").fillna(0)
+
+    # Combine subject marks and subject attendance
+    subject_combined = pd.merge(
+        marks_df,
+        attendance_df,
+        on=["Roll_No", "Semester", "Subject"],
+        how="left"
+    )
+
+    # Compute per-student per-semester averages
+    mark_summary = (
+        marks_df.groupby(["Roll_No", "Semester"], as_index=False)["Total"]
+        .mean()
+        .rename(columns={"Total": "_average_mark"})
+    )
+    
+    attendance_summary = (
+        attendance_df.groupby(["Roll_No", "Semester"], as_index=False)["Attendance"]
+        .mean()
+        .rename(columns={"Attendance": "Attendance"})
+    )
+
+    # Filter active students and merge overall performance
+    students = student_df[student_df["Status"].astype(str).str.strip().str.capitalize().eq("Active")].copy()
+    students = students.merge(mark_summary, on=["Roll_No", "Semester"], how="left")
+    students = students.merge(attendance_summary, on=["Roll_No", "Semester"], how="left")
+
+    # Assign Division A/B:
+    # 2541xx -> Division A (Official Div A list)
+    # 2542xx -> Division B (Official Div B list)
+    # Legacy cohorts -> first 30 in semester = A, remainder = B
+    students = students.sort_values(["Semester", "Roll_No"]).reset_index(drop=True)
+    position = students.groupby("Semester").cumcount()
+    
+    def _assign_division(row, pos):
+        roll_str = str(row["Roll_No"]).strip()
+        if roll_str.startswith("2541"):
+            return "A"
+        elif roll_str.startswith("2542"):
+            return "B"
+        return "A" if pos < 30 else "B"
+
+    students["Division"] = [_assign_division(row, pos) for row, pos in zip(students.to_dict(orient="records"), position)]
+
+    # Standardize column names & metrics
+    students = students.rename(columns={"Roll_No": "Roll", "Student_Name": "Name"})
+    students["SGPI"] = (students["_average_mark"] / 10).round(2)
+    students["Attendance"] = students["Attendance"].round(2)
+    students["_average_mark"] = students["_average_mark"].round(2)
+
+    _DATA_CACHE = (admin_df, students, marks_df, attendance_df, subject_combined)
+    return admin_df.copy(), students.copy(), marks_df.copy(), attendance_df.copy(), subject_combined.copy()
+
+def get_admin_info():
+    """Return primary admin info dictionary."""
+    global _ADMIN_CACHE
+    if _ADMIN_CACHE is not None:
+        return _ADMIN_CACHE.copy()
+
+    admin_df = pd.read_csv(DATA_DIR / "admin.csv")
+    if not admin_df.empty:
+        _ADMIN_CACHE = admin_df.iloc[0].to_dict()
+        return _ADMIN_CACHE.copy()
+    default_admin = {
+        "Teacher_ID": "T001",
+        "Teacher_Name": "Mr. Zeeshan Shaikh",
+        "Email": "admin@college.edu",
+        "Phone": "9876543210"
+    }
+    _ADMIN_CACHE = default_admin
+    return default_admin.copy()
+
+def load_teachers():
+    """Load teacher dataset."""
+    teacher_path = DATA_DIR / "teacher.csv"
+    if teacher_path.exists():
+        return pd.read_csv(teacher_path)
+    return pd.DataFrame(columns=["Teacher_ID", "Username", "Password", "Teacher_Name", "Email", "Subject", "Semester", "Status"])
+
+def get_teacher_info(username):
+    """Return teacher metadata dictionary by username or Teacher_ID."""
+    teacher_df = load_teachers()
+    if teacher_df.empty:
+        return None
+    
+    match = teacher_df[
+        (teacher_df["Username"].astype(str).str.lower() == str(username).lower()) &
+        (teacher_df["Status"].astype(str).str.strip().str.capitalize() == "Active")
+    ]
+    if match.empty:
+        match = teacher_df[
+            (teacher_df["Teacher_ID"].astype(str).str.lower() == str(username).lower()) &
+            (teacher_df["Status"].astype(str).str.strip().str.capitalize() == "Active")
+        ]
+    if not match.empty:
+        first_row = match.iloc[0]
+        return {
+            "Teacher_ID": str(first_row["Teacher_ID"]),
+            "Username": str(first_row["Username"]),
+            "Teacher_Name": str(first_row["Teacher_Name"]),
+            "Email": str(first_row.get("Email", "")),
+            "Status": str(first_row.get("Status", "Active"))
+        }
+    return None
+
+def get_teacher_assignments(username):
+    """
+    Return all subject-semester assignments
+    for a specific teacher as a list of dicts.
+    """
+    teacher_df = load_teachers()
+    if teacher_df.empty:
+        return []
+
+    teacher_df["Username_str"] = teacher_df["Username"].astype(str).str.strip().str.lower()
+    teacher_df["Teacher_ID_str"] = teacher_df["Teacher_ID"].astype(str).str.strip().str.lower()
+    teacher_df["Status_str"] = teacher_df["Status"].astype(str).str.strip().str.capitalize()
+
+    target = str(username).strip().lower()
+    assignments_df = teacher_df[
+        ((teacher_df["Username_str"] == target) | (teacher_df["Teacher_ID_str"] == target)) &
+        (teacher_df["Status_str"] == "Active")
+    ].copy()
+
+    if assignments_df.empty:
+        return []
+
+    assignments = []
+    for _, row in assignments_df.iterrows():
+        try:
+            sem = int(row["Semester"])
+        except (ValueError, TypeError):
+            sem = row["Semester"]
+        assignments.append({
+            "Teacher_ID": str(row["Teacher_ID"]),
+            "Username": str(row["Username"]),
+            "Teacher_Name": str(row["Teacher_Name"]),
+            "Email": str(row.get("Email", "")),
+            "Subject": str(row["Subject"]).strip(),
+            "Semester": sem
+        })
+    return assignments
+
+def get_semester_subjects(semester=None):
+    """Return subject list for a specific semester or all semesters dictionary."""
+    if semester:
+        try:
+            return SEMESTER_SUBJECTS.get(int(semester), [])
+        except (ValueError, TypeError):
+            return []
+    return SEMESTER_SUBJECTS
+
+def get_student_detail(roll):
+    """Retrieve full student profile details, subject marks breakdown, and recommendations."""
+    _, students, marks_df, attendance_df, subject_combined = load_data()
+    
+    roll_str = str(roll).strip().lower()
+    student_rows = students[students["Roll"].astype(str).str.strip().str.lower() == roll_str]
+    if student_rows.empty:
+        return None
+
+    student = student_rows.iloc[0].to_dict()
+    roll_no = str(student["Roll"]).strip()
+    semester = int(student["Semester"])
+
+    # Retrieve subject breakdown for current semester
+    student_subjects = subject_combined[
+        (subject_combined["Roll_No"].astype(str).str.strip().str.lower() == roll_str) & 
+        (subject_combined["Semester"].astype(int) == semester)
+    ].copy()
+
+    subjects_list = []
+    subject_marks_dict = {}
+
+    for _, row in student_subjects.iterrows():
+        subj_name = str(row["Subject"]).strip()
+        tot_marks = int(row["Total"])
+        int_marks = int(row["Internal"])
+        ext_marks = int(row["External"])
+        grade = str(row["Grade"]).strip()
+        att = float(row["Attendance"])
+
+        subject_marks_dict[subj_name] = tot_marks
+        subjects_list.append({
+            "subject": subj_name,
+            "internal": int_marks,
+            "external": ext_marks,
+            "total": tot_marks,
+            "grade": grade,
+            "attendance": round(att, 1)
+        })
+
+    if subject_marks_dict:
+        strongest_subject = max(subject_marks_dict, key=subject_marks_dict.get)
+        weakest_subject = min(subject_marks_dict, key=subject_marks_dict.get)
+        average_marks = round(sum(subject_marks_dict.values()) / len(subject_marks_dict), 2)
+    else:
+        strongest_subject = "N/A"
+        weakest_subject = "N/A"
+        average_marks = student.get("_average_mark", 0)
+
+    sgpi = student["SGPI"]
+    attendance = student["Attendance"]
+
+    if sgpi >= 8.5:
+        overall_performance = "Excellent"
+    elif sgpi >= 7.0:
+        overall_performance = "Good"
+    elif sgpi >= 6.0:
+        overall_performance = "Average"
+    else:
+        overall_performance = "Needs Improvement"
+
+    if attendance >= 90:
+        attendance_status = "Excellent"
+    elif attendance >= 75:
+        attendance_status = "Good"
+    else:
+        attendance_status = "Low (At Risk)"
+
+    if attendance < 75 or sgpi < 6.0:
+        academic_risk = "High"
+    elif sgpi < 7.0:
+        academic_risk = "Medium"
+    else:
+        academic_risk = "Low"
+
+    recommendations = []
+    if attendance < 75:
+        recommendations.append("Improve attendance immediately to maintain eligibility.")
+    if sgpi < 6.0:
+        recommendations.append("Seek remedial tutoring and academic mentoring in weaker subjects.")
+    elif sgpi < 7.5:
+        recommendations.append(f"Focus on boosting performance in {weakest_subject} to improve SGPI.")
+    else:
+        recommendations.append("Maintain high SGPI consistency to qualify for academic honors & distinction.")
+    
+    recommendations.append("Practice previous semester examination question papers regularly.")
+    recommendations.append("Participate in technical workshops and lab practical exercises.")
+
+    return {
+        "student": student,
+        "subjects_list": subjects_list,
+        "strongest_subject": strongest_subject,
+        "weakest_subject": weakest_subject,
+        "average_marks": average_marks,
+        "overall_performance": overall_performance,
+        "attendance_status": attendance_status,
+        "academic_risk": academic_risk,
+        "recommendations": recommendations
+    }
+

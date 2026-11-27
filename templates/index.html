@@ -1,0 +1,1414 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Academic Intelligence | Admin Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+      }
+
+      /* Navbar */
+      .navbar-custom {
+        background-color: var(--navbar-bg) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .brand-badge {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      /* Hero Header */
+      .hero-card {
+        background: var(--hero-bg) !important;
+        border-radius: 20px;
+        color: var(--hero-text) !important;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--hero-border) !important;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      }
+
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(
+          circle,
+          rgba(37, 99, 235, 0.2) 0%,
+          rgba(0, 0, 0, 0) 70%
+        );
+        border-radius: 50%;
+      }
+
+      /* KPI Cards */
+      .kpi-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+      }
+
+      .kpi-primary::before {
+        background-color: var(--primary);
+      }
+      .kpi-secondary::before {
+        background-color: var(--secondary);
+      }
+      .kpi-info::before {
+        background-color: var(--secondary);
+      }
+      .kpi-danger::before {
+        background-color: var(--danger);
+      }
+      .kpi-success::before {
+        background-color: var(--success);
+      }
+
+      .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+      }
+
+      /* Filter & Search Bar */
+      .filter-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+      }
+
+      .form-control-custom,
+      .form-select-custom {
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        padding: 0.6rem 0.9rem;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+      }
+
+      .form-control-custom:focus,
+      .form-select-custom:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+
+      /* Analytics Cards */
+      .chart-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        height: 100%;
+      }
+
+      /* Data Table */
+      .table-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+      }
+
+      .table-custom {
+        margin-bottom: 0;
+      }
+
+      .table-custom thead th {
+        background-color: var(--table-header-bg);
+        color: var(--table-header-text);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+      }
+
+      .table-custom tbody tr {
+        transition: background-color 0.15s ease;
+      }
+
+      .table-custom tbody tr:hover {
+        background-color: var(--table-row-hover);
+      }
+
+      .table-custom td {
+        padding: 0.9rem 1rem;
+        vertical-align: middle;
+        font-size: 0.92rem;
+      }
+
+      .avatar-initials {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 10px;
+      }
+
+      /* Custom Badges */
+      .badge-soft-success {
+        background-color: rgba(22, 163, 74, 0.12);
+        color: var(--success);
+        font-weight: 600;
+      }
+      .badge-soft-info {
+        background-color: rgba(59, 130, 246, 0.12);
+        color: var(--secondary);
+        font-weight: 600;
+      }
+      .badge-soft-warning {
+        background-color: rgba(245, 158, 11, 0.12);
+        color: var(--warning);
+        font-weight: 600;
+      }
+      .badge-soft-danger {
+        background-color: rgba(220, 38, 38, 0.12);
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .badge-soft-secondary {
+        background-color: rgba(59, 130, 246, 0.12);
+        color: var(--secondary);
+        font-weight: 600;
+      }
+      .badge-soft-primary {
+        background-color: rgba(37, 99, 235, 0.12);
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      /* Buttons */
+      .btn-primary-custom {
+        background-color: var(--primary);
+        color: white;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.2s;
+      }
+
+      .btn-primary-custom:hover {
+        background-color: var(--primary-hover);
+        color: white;
+      }
+
+      .btn-outline-custom {
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0.6rem 1.25rem;
+        background: var(--bg-card);
+        transition: all 0.2s;
+      }
+
+      .btn-outline-custom:hover {
+        background-color: var(--bg-elevated);
+        color: var(--text-primary);
+      }
+
+      /* Modal Styling */
+      .modal-content-custom {
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+
+      .modal-header-custom {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        color: white;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-layout" id="dashboardLayout">
+      <!-- Fixed Dashboard Sidebar -->
+      <aside class="dashboard-sidebar" id="dashboardSidebar">
+        <div>
+          <div class="sidebar-header d-flex align-items-center justify-content-between">
+            <a class="sidebar-brand d-flex align-items-center" href="{{ url_for('home') }}">
+              <span class="brand-badge"><i class="bi bi-mortarboard-fill me-1.5"></i> Academic Intelligence</span>
+            </a>
+            <button class="sidebar-toggle-btn" style="width: 32px; height: 32px; border-radius: 8px;" onclick="toggleSidebar()" aria-label="Toggle Sidebar" title="Hide Sidebar">
+              <i class="bi bi-x-lg fs-6 d-lg-none"></i>
+              <i class="bi bi-layout-sidebar-inset fs-6 d-none d-lg-inline"></i>
+            </button>
+          </div>
+
+          <div class="sidebar-menu">
+            <div class="sidebar-section-label">Main Navigation</div>
+            <a href="#dashboard" class="sidebar-nav-item active">
+              <i class="bi bi-grid-fill"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="#analytics" class="sidebar-nav-item">
+              <i class="bi bi-bar-chart-line-fill"></i>
+              <span>Analytics</span>
+            </a>
+            <a href="#records" class="sidebar-nav-item">
+              <i class="bi bi-people-fill"></i>
+              <span>Student Records</span>
+            </a>
+            <a href="{{ url_for('question_paper.index') }}" class="sidebar-nav-item">
+              <i class="bi bi-file-earmark-check-fill text-info"></i>
+              <span>Paper Intelligence</span>
+            </a>
+            <a href="{{ url_for('admin_reports') }}" class="sidebar-nav-item">
+              <i class="bi bi-file-earmark-bar-graph-fill text-primary"></i>
+              <span>Reports Center</span>
+            </a>
+
+            <!-- Administration Section in Sidebar (Properly Bounded & Contained) -->
+            <div class="sidebar-admin-box">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-shield-lock-fill text-danger fs-5"></i>
+                <div>
+                  <div class="fw-bold small lh-1 text-danger">Administration</div>
+                  <small class="text-muted fs-8">Institutional Governance</small>
+                </div>
+              </div>
+              <div class="p-2 rounded-2 border bg-card">
+                <div class="fw-bold fs-8 text-truncate" style="max-width: 180px;">{{ admin.Teacher_Name if admin else "Administrator" }}</div>
+                <small class="text-muted fs-9 d-block">Admin Portal • Verified</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <button onclick="toggleTheme()" class="theme-toggle-pill w-100 justify-content-center mb-2" type="button" aria-label="Toggle Theme">
+            <span>☀️ Light</span><span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+          </button>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-pill w-100">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
+          </a>
+        </div>
+      </aside>
+
+      <!-- Mobile Sidebar Overlay Backdrop -->
+      <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+      <!-- Main Content Area (occupies remaining width) -->
+      <div class="main-content">
+        <!-- Top Utility Header -->
+        <header class="d-flex align-items-center justify-content-between px-3 px-md-4 py-2.5 border-bottom bg-card sticky-top" style="z-index: 1010;">
+          <div class="d-flex align-items-center gap-2 gap-md-3">
+            <button id="sidebarToggleBtn" class="sidebar-toggle-btn" type="button" onclick="toggleSidebar()" aria-label="Toggle Navigation" title="Toggle Sidebar (Hide / Show)">
+              <i class="bi bi-list fs-5 lh-1"></i>
+            </button>
+            <span class="fw-bold fs-6 d-none d-sm-inline text-primary">Academic Analytics & Performance Intelligence</span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 gap-md-3">
+            <div class="d-none d-md-flex align-items-center user-badge-pill px-3 py-1.5 rounded-pill small">
+              <i class="bi bi-person-circle text-primary me-2"></i>
+              <span class="fw-bold">{{ admin.Teacher_Name if admin else "Mr. Zeeshan Shaikh" }}</span>
+            </div>
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-pill d-none d-sm-inline-flex" type="button" aria-label="Toggle Theme">
+              <span>☀️ Light</span><span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+            </button>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+              <i class="bi bi-box-arrow-right me-1"></i> <span class="d-none d-sm-inline">Logout</span>
+            </a>
+          </div>
+        </header>
+
+        <!-- Dashboard Container -->
+        <div class="dashboard-container" id="dashboard">
+      <!-- Hero Banner -->
+      <div class="hero-card p-4 p-md-5 mb-4 position-relative">
+        <div
+          class="row align-items-center position-relative"
+          style="z-index: 2"
+        >
+          <div class="col-lg-8">
+            <span
+              class="badge bg-primary text-white px-3 py-1.5 rounded-pill fs-7 mb-3 fw-semibold border border-white border-opacity-25"
+            >
+              <i class="bi bi-cpu me-1"></i> EXAMINATION INTELLIGENCE SYSTEM
+            </span>
+            <h1 class="fw-extrabold display-6 mb-2">
+              Academic Analytics & Performance Intelligence
+            </h1>
+            <p class="fs-5 mb-0" style="max-width: 650px; opacity: 0.85;">
+              Real-time monitoring of student examination scores, attendance
+              benchmarks, risk factors, and institutional metrics.
+            </p>
+          </div>
+          <div class="col-lg-4 text-start text-lg-end mt-4 mt-lg-0">
+            <a
+              href="/export?semester={{ selected_semester }}&division={{ selected_division }}&risk={{ selected_risk }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}"
+              class="btn btn-light btn-lg rounded-pill px-4 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
+            >
+              <i class="bi bi-download text-primary"></i> Export Full CSV
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Grid -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-primary p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >Total Students</span
+              >
+              <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-people text-primary"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-dark mb-0">{{ total_students }}</h2>
+            <small class="text-muted fs-8">Active Records</small>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-secondary p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >Average SGPI</span
+              >
+              <div
+                class="icon-circle bg-primary bg-opacity-10 text-primary"
+                style="background-color: rgba(37, 99, 235, 0.1);"
+              >
+                <i class="bi bi-trophy text-primary" style="color: var(--primary);"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-dark mb-0">{{ average_sgpi }}</h2>
+            <small class="text-muted fs-8">Scale / 10.0</small>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-info p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >Average Att.</span
+              >
+              <div class="icon-circle bg-info bg-opacity-10 text-info">
+                <i class="bi bi-calendar-check text-info"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-dark mb-0">{{ average_attendance }}%</h2>
+            <small class="text-muted fs-8">Class Aggregate</small>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-danger p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >At Risk</span
+              >
+              <div class="icon-circle bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-danger mb-0">{{ at_risk }}</h2>
+            <small class="text-muted fs-8">&lt;75% Att. or &lt;6 SGPI</small>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-success p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >Honors Roll</span
+              >
+              <div class="icon-circle bg-success bg-opacity-10 text-success">
+                <i class="bi bi-star-fill text-success"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-success mb-0">{{ honors }}</h2>
+            <small class="text-muted fs-8">SGPI &ge; 8.5</small>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-primary p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="text-muted fw-semibold fs-7 text-uppercase"
+                >Pass Rate</span
+              >
+              <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-check-circle-fill text-primary"></i>
+              </div>
+            </div>
+            <h2 class="fw-bold text-dark mb-0">{{ pass_rate }}%</h2>
+            <small class="text-muted fs-8">Eligible Progression</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls & Live Search Bar -->
+      <div class="filter-card p-3 p-md-4 mb-4">
+        <form
+          action="/"
+          method="get"
+          class="row g-3 align-items-end"
+          id="filterForm"
+        >
+          <div class="col-12 col-md-6 col-lg-3">
+            <label
+              for="semester"
+              class="form-label fw-semibold text-secondary fs-7"
+              >Filter Semester</label
+            >
+            <select
+              id="semester"
+              name="semester"
+              class="form-select form-select-custom"
+              onchange="this.form.submit()"
+            >
+              <option value="">All Semesters (Sem 1 - 6)</option>
+              <option
+                value="1"
+                {% if selected_semester == "1" %}selected{% endif %}
+              >
+                Semester 1 (Python, Math I, Comm, Dig Elec)
+              </option>
+              <option
+                value="2"
+                {% if selected_semester == "2" %}selected{% endif %}
+              >
+                Semester 2 (DS, DBMS, Stats, Web Dev)
+              </option>
+              <option
+                value="3"
+                {% if selected_semester == "3" %}selected{% endif %}
+              >
+                Semester 3 (Data Analytics, OS, CN, SE)
+              </option>
+              <option
+                value="4"
+                {% if selected_semester == "4" %}selected{% endif %}
+              >
+                Semester 4 (Java, Data Vis, Cloud, AI)
+              </option>
+              <option
+                value="5"
+                {% if selected_semester == "5" %}selected{% endif %}
+              >
+                Semester 5 (ML, Cyber Sec, Cloud Arch, DevOps)
+              </option>
+              <option
+                value="6"
+                {% if selected_semester == "6" %}selected{% endif %}
+              >
+                Semester 6 (Big Data, DL, NLP, Capstone)
+              </option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-3 col-lg-2">
+            <label
+              for="division"
+              class="form-label fw-semibold text-secondary fs-7"
+              >Division</label
+            >
+            <select
+              id="division"
+              name="division"
+              class="form-select form-select-custom"
+              onchange="this.form.submit()"
+            >
+              <option value="">All Divisions</option>
+              <option
+                value="A"
+                {% if selected_division == "A" %}selected{% endif %}
+              >
+                Division A
+              </option>
+              <option
+                value="B"
+                {% if selected_division == "B" %}selected{% endif %}
+              >
+                Division B
+              </option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-3 col-lg-2">
+            <label for="risk" class="form-label fw-semibold text-secondary fs-7"
+              >Academic Risk</label
+            >
+            <select
+              id="risk"
+              name="risk"
+              class="form-select form-select-custom"
+              onchange="this.form.submit()"
+            >
+              <option value="">All Levels</option>
+              <option
+                value="at_risk"
+                {% if selected_risk == "at_risk" %}selected{% endif %}
+              >
+                At Risk Only (&lt;75% / &lt;6 SGPI)
+              </option>
+              <option
+                value="honors"
+                {% if selected_risk == "honors" %}selected{% endif %}
+              >
+                Honors Only (&ge;8.5 SGPI)
+              </option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-8 col-lg-3">
+            <label
+              for="liveSearch"
+              class="form-label fw-semibold text-secondary fs-7"
+              >Instant Student Search</label
+            >
+            <div class="input-group">
+              <span
+                class="input-group-text bg-white border-end-0 rounded-start-3"
+                ><i class="bi bi-search text-muted"></i
+              ></span>
+              <input
+                type="text"
+                id="liveSearch"
+                class="form-control form-control-custom border-start-0 ps-0"
+                placeholder="Type name or roll..."
+                onkeyup="filterTable()"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4 col-lg-2 d-flex gap-2">
+            <a
+              href="/"
+              class="btn btn-outline-custom w-100 py-2 text-center text-decoration-none"
+            >
+              <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </a>
+          </div>
+          <input type="hidden" name="sort_by" value="{{ sort_by or '' }}" />
+          <input
+            type="hidden"
+            name="sort_order"
+            value="{{ sort_order or 'asc' }}"
+          />
+        </form>
+      </div>
+
+      <!-- Analytics Charts Section -->
+      <div class="mb-5" id="analytics">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-4">
+          <h3 class="fw-bold mb-0">
+            <i class="bi bi-pie-chart-fill text-primary me-2"></i> Performance
+            Analytics
+          </h3>
+          <span
+            class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-7 align-self-start align-self-sm-auto"
+          >
+            Showing {{ "Semester " + selected_semester if selected_semester else
+            "All Semesters Aggregate" }}
+          </span>
+        </div>
+
+        <div class="row g-4 mb-4">
+          <!-- Chart 1: Subject Performance Averages -->
+          <div class="col-12 col-lg-6">
+            <div class="chart-card p-3 p-md-4 shadow-sm">
+              <h5 class="fw-bold text-dark mb-1">
+                Subject Performance Averages
+              </h5>
+              <p class="text-muted small mb-3 mb-md-4">
+                Mean score (/100) per subject across selected students
+              </p>
+              <div style="position: relative; height: 260px; width: 100%">
+                <canvas id="subjectAverageChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart 2: Grade Distribution -->
+          <div class="col-12 col-lg-6">
+            <div class="chart-card p-3 p-md-4 shadow-sm">
+              <h5 class="fw-bold text-dark mb-1">Grade Distribution</h5>
+              <p class="text-muted small mb-3 mb-md-4">
+                Frequency of letter grades awarded (O, A+, A, B+, B, C, F)
+              </p>
+              <div style="position: relative; height: 260px; width: 100%">
+                <canvas id="gradeDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Chart 3: Attendance Distribution -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="chart-card p-3 p-md-4 shadow-sm">
+              <h5 class="fw-bold text-dark mb-1">Attendance Distribution</h5>
+              <p class="text-muted small mb-3 mb-md-4">
+                Categorized by attendance thresholds
+              </p>
+              <div style="position: relative; height: 240px; width: 100%">
+                <canvas id="attendanceDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart 4: SGPI Distribution Bins -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="chart-card p-3 p-md-4 shadow-sm">
+              <h5 class="fw-bold text-dark mb-1">SGPI Spread</h5>
+              <p class="text-muted small mb-3 mb-md-4">
+                Student count per SGPI grade band
+              </p>
+              <div style="position: relative; height: 240px; width: 100%">
+                <canvas id="sgpiDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart 5: Top 10 Performing Students -->
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="chart-card p-3 p-md-4 shadow-sm">
+              <h5 class="fw-bold text-dark mb-1">Top Performers</h5>
+              <p class="text-muted small mb-3 mb-md-4">Highest SGPI rankers</p>
+              <div style="position: relative; height: 240px; width: 100%">
+                <canvas id="topStudentsChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Records Table Section -->
+      <div class="mb-5" id="records">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h3 class="fw-bold mb-1">
+              <i class="bi bi-journal-text text-primary me-2"></i> Student
+              Examination Records
+            </h3>
+            <p class="text-muted small mb-0">
+              Total
+              <span id="recordCount" class="fw-bold text-dark"
+                >{{ students|length }}</span
+              >
+              matching records found
+            </p>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Attendance Status Legend -->
+            <div class="attendance-status-legend">
+              <span class="legend-title">Attendance:</span>
+              <span class="legend-item"><span class="legend-dot dot-safe"></span> &ge; 75% Safe / Eligible</span>
+              <span class="legend-item"><span class="legend-dot dot-risk"></span> &lt; 75% Low / At Risk</span>
+            </div>
+
+            <!-- Display Limit Selector -->
+            <div class="d-flex align-items-center gap-1.5 ms-md-2">
+              <label for="adminDisplayLimit" class="small text-muted fw-semibold text-nowrap mb-0 d-none d-sm-inline">Show:</label>
+              <select id="adminDisplayLimit" class="form-select form-select-sm bg-card border rounded-pill py-1 px-2.5" style="width: auto;" onchange="changeAdminDisplayLimit(this.value)">
+                <option value="all" selected>All (Scroll View)</option>
+                <option value="10">Top 10</option>
+                <option value="25">Top 25</option>
+                <option value="50">Top 50</option>
+              </select>
+            </div>
+
+            <div class="table-scroll-hint">
+              <i class="bi bi-arrows-expand"></i> Swipe horizontally
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card student-table-card shadow-sm">
+          <div
+            id="tableScrollArea"
+            class="table-responsive table-wrapper student-table-scroll"
+            style="max-height: 560px; overflow-y: auto !important; overflow-x: auto !important;"
+          >
+            <table class="table table-custom align-middle mb-0" id="studentsTable">
+              <thead>
+                <tr>
+                  <th class="col-roll text-nowrap">
+                    <a
+                      href="?semester={{ selected_semester }}&division={{ selected_division }}&risk={{ selected_risk }}&sort_by=Roll&sort_order={{ 'desc' if sort_by == 'Roll' and sort_order == 'asc' else 'asc' }}"
+                      class="text-white text-decoration-none"
+                    >
+                      Roll No {% if sort_by == 'Roll' %}{{ '▲' if sort_order ==
+                      'asc' else '▼' }}{% endif %}
+                    </a>
+                  </th>
+                  <th class="col-student">
+                    <a
+                      href="?semester={{ selected_semester }}&division={{ selected_division }}&risk={{ selected_risk }}&sort_by=Name&sort_order={{ 'desc' if sort_by == 'Name' and sort_order == 'asc' else 'asc' }}"
+                      class="text-white text-decoration-none"
+                    >
+                      Student Name {% if sort_by == 'Name' %}{{ '▲' if
+                      sort_order == 'asc' else '▼' }}{% endif %}
+                    </a>
+                  </th>
+                  {% if not selected_semester %}
+                  <th class="col-sem">Semester</th>
+                  {% endif %}
+                  <th class="col-div">Division</th>
+
+                  {% if selected_semester and semester_subjects %} {% for subj
+                  in semester_subjects %}
+                  <th class="text-center">{{ subj }}</th>
+                  {% endfor %} {% else %}
+                  <th class="col-marks text-center">Avg Mark</th>
+                  {% endif %}
+
+                  <th class="col-att text-center">
+                    <a
+                      href="?semester={{ selected_semester }}&division={{ selected_division }}&risk={{ selected_risk }}&sort_by=Attendance&sort_order={{ 'desc' if sort_by == 'Attendance' and sort_order == 'asc' else 'asc' }}"
+                      class="text-white text-decoration-none"
+                    >
+                      Attendance {% if sort_by == 'Attendance' %}{{ '▲' if
+                      sort_order == 'asc' else '▼' }}{% endif %}
+                    </a>
+                  </th>
+                  <th class="col-cgpa text-center">
+                    <a
+                      href="?semester={{ selected_semester }}&division={{ selected_division }}&risk={{ selected_risk }}&sort_by=SGPI&sort_order={{ 'desc' if sort_by == 'SGPI' and sort_order == 'asc' else 'asc' }}"
+                      class="text-white text-decoration-none"
+                    >
+                      SGPI {% if sort_by == 'SGPI' %}{{ '▲' if sort_order ==
+                      'asc' else '▼' }}{% endif %}
+                    </a>
+                  </th>
+                  <th class="col-actions text-end px-3 px-md-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for student in students %}
+                <tr class="student-row">
+                  <td class="col-roll fw-bold text-primary">{{ student.Roll }}</td>
+                  <td class="col-student">
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-initials flex-shrink-0">{{ student.Name[0] }}</div>
+                      <div class="min-w-0">
+                        <div class="fw-semibold text-dark text-truncate" style="max-width: 190px;" title="{{ student.Name }}">
+                          {{ student.Name }}
+                        </div>
+                        <small class="text-muted fs-8 text-truncate d-block" style="max-width: 190px;" title="{{ student.Email if student.Email else '' }}"
+                          >{{ student.Email if student.Email else "" }}</small
+                        >
+                      </div>
+                    </div>
+                  </td>
+                  {% if not selected_semester %}
+                  <td class="col-sem">
+                    <span class="badge bg-light text-dark border"
+                      >Sem {{ student.Semester }}</span
+                    >
+                  </td>
+                  {% endif %}
+                  <td class="col-div">
+                    <span class="badge bg-light text-dark border"
+                      >Div {{ student.Division }}</span
+                    >
+                  </td>
+
+                  {% if selected_semester and semester_subjects %} {% for subj
+                  in semester_subjects %}
+                  <td class="text-center fw-semibold">
+                    {{ student.subjects[subj] if student.subjects and subj in
+                    student.subjects else "N/A" }}
+                  </td>
+                  {% endfor %} {% else %}
+                  <td class="col-marks text-center fw-semibold text-secondary">
+                    {{ student._average_mark }}%
+                  </td>
+                  {% endif %}
+
+                  <td class="col-att text-center">
+                    <span
+                      class="badge {% if student.Attendance >= 90 %}badge-soft-success{% elif student.Attendance >= 75 %}badge-soft-info{% else %}badge-soft-danger{% endif %} px-2.5 py-1.5 rounded-pill"
+                    >
+                      {{ student.Attendance }}%
+                    </span>
+                  </td>
+                  <td class="col-cgpa text-center">
+                    <span
+                      class="badge {% if student.SGPI >= 8.5 %}badge-soft-success{% elif student.SGPI >= 6.5 %}badge-soft-primary{% elif student.SGPI >= 6.0 %}badge-soft-warning{% else %}badge-soft-danger{% endif %} px-2.5 py-1.5 rounded-pill fs-7"
+                    >
+                      {{ student.SGPI }}
+                    </span>
+                  </td>
+                  <td class="col-actions text-end px-3 px-md-4">
+                    <div class="action-btn-group">
+                      <button
+                        class="btn btn-sm btn-outline-custom rounded-pill"
+                        onclick="openQuickView('{{ student.Roll }}')"
+                        title="Quick Preview"
+                        aria-label="Quick Preview"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <a
+                        href="/student/{{ student.Roll }}"
+                        class="btn btn-sm btn-primary-custom rounded-pill px-2.5 px-md-3 text-nowrap"
+                      >
+                        Profile
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Interactive Table Footer with Live Counter and Scroll-to-Top -->
+          <div class="card-footer bg-card border-top px-3 px-md-4 py-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2 small">
+            <div class="text-muted">
+              <i class="bi bi-person-lines-fill text-primary me-1.5"></i>
+              Showing <span id="tableVisibleCount" class="fw-bold text-primary">{{ students|length }}</span> of <span class="fw-bold">{{ students|length }}</span> total student records
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted d-none d-sm-inline"><i class="bi bi-mouse me-1"></i>Scroll table to inspect all</span>
+              <button type="button" class="btn btn-sm btn-outline-custom rounded-pill py-1 px-2.5" onclick="document.getElementById('tableScrollArea').scrollTo({top: 0, behavior: 'smooth'})">
+                <i class="bi bi-arrow-up-short me-1"></i>Top
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About & Footer -->
+      <footer
+        id="about"
+        class="hero-card p-4 p-md-5 mt-5 text-center position-relative"
+      >
+        <div class="position-relative" style="z-index: 2">
+          <h4 class="fw-bold hero-footer-title mb-2">
+            Academic Performance & Examination Intelligence System
+          </h4>
+          <p class="hero-footer-subtitle mx-auto mb-4" style="max-width: 650px">
+            An advanced analytical decision-support platform engineered for
+            academic faculty to evaluate examination results, track subject
+            outcomes, and support student success.
+          </p>
+          <hr
+            class="my-4 border-secondary opacity-25 mx-auto"
+            style="width: 50%"
+          />
+          <p
+            class="text-uppercase hero-footer-muted fw-semibold fs-8 tracking-widest mb-1"
+          >
+            Architect & Developer
+          </p>
+          <h5 class="fw-extrabold hero-footer-author mb-1">Zeeshan Shaikh</h5>
+          <p class="text-primary small mb-0 fw-medium">
+            Department of Information Technology
+          </p>
+        </div>
+      </footer>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick View Student Modal -->
+    <div
+      class="modal fade"
+      id="quickViewModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-custom overflow-hidden">
+          <div class="modal-header modal-header-custom p-4 border-0">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-initials fs-4 p-3" id="modalAvatar">S</div>
+              <div>
+                <h4
+                  class="modal-title fw-bold text-white mb-0"
+                  id="modalStudentName"
+                >
+                  Student Name
+                </h4>
+                <small class="text-white-50" id="modalRollSem"
+                  >Roll: IT2024001 | Semester 3</small
+                >
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4" id="modalBodyContent">
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-2 text-muted">Fetching student details...</p>
+            </div>
+          </div>
+          <div
+            class="modal-footer border-0 p-3 bg-light d-flex justify-content-between"
+          >
+            <button
+              type="button"
+              class="btn btn-outline-custom rounded-pill"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <a
+              href="#"
+              id="modalFullProfileBtn"
+              class="btn btn-primary-custom rounded-pill px-4"
+              >Open Full Profile Page</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const students = {{ students|tojson }};
+      const subjectAveragesData = {{ subject_averages|tojson }};
+      const gradeDistributionData = {{ grade_distribution|tojson }};
+
+      // Responsive & Desktop Collapsible Sidebar Toggle
+      function toggleSidebar() {
+        const isMobile = window.innerWidth < 992;
+        const layout = document.getElementById('dashboardLayout') || document.body;
+        const sidebar = document.getElementById('dashboardSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (isMobile) {
+          if (sidebar) sidebar.classList.toggle('show');
+          if (overlay) overlay.classList.toggle('show');
+        } else {
+          // Desktop toggle: smoothly hide or reveal sidebar
+          const isCollapsed = layout.classList.toggle('sidebar-collapsed');
+          if (sidebar) sidebar.classList.toggle('collapsed', isCollapsed);
+          try {
+            localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+          } catch(e) {}
+        }
+
+        // Trigger resize event after CSS transition finishes so Chart.js charts smoothly resize
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 320);
+      }
+
+      // Enhanced Smooth Scroll Interaction & ScrollSpy for Sidebar
+      document.addEventListener('DOMContentLoaded', function() {
+        // Restore desktop sidebar collapsed preference if previously saved
+        if (window.innerWidth >= 992) {
+          try {
+            if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+              const layout = document.getElementById('dashboardLayout') || document.body;
+              const sidebar = document.getElementById('dashboardSidebar');
+              if (layout) layout.classList.add('sidebar-collapsed');
+              if (sidebar) sidebar.classList.add('collapsed');
+            }
+          } catch(e) {}
+        }
+        document.querySelectorAll('.sidebar-nav-item[href^="#"]').forEach(link => {
+          link.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+              e.preventDefault();
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              document.querySelectorAll('.sidebar-nav-item').forEach(l => l.classList.remove('active'));
+              this.classList.add('active');
+              if (window.innerWidth < 992) toggleSidebar();
+            }
+          });
+        });
+
+        window.addEventListener('scroll', function() {
+          const sections = ['dashboard', 'analytics', 'records'];
+          const scrollPos = window.scrollY + 140;
+          sections.forEach(id => {
+            const el = document.getElementById(id);
+            const link = document.querySelector(`.sidebar-nav-item[href="#${id}"]`);
+            if (el && link) {
+              const top = el.offsetTop;
+              const height = el.offsetHeight;
+              if (scrollPos >= top && scrollPos < top + height) {
+                document.querySelectorAll('.sidebar-nav-item').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+              }
+            }
+          });
+        }, { passive: true });
+
+        // Mousewheel scroll containment for student table
+        const scrollArea = document.getElementById('tableScrollArea');
+        if (scrollArea) {
+          scrollArea.addEventListener('wheel', function(e) {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+              const maxScroll = scrollArea.scrollHeight - scrollArea.clientHeight;
+              if (maxScroll > 0) {
+                const atTop = scrollArea.scrollTop <= 0 && e.deltaY < 0;
+                const atBottom = scrollArea.scrollTop >= maxScroll - 1 && e.deltaY > 0;
+                if (!atTop && !atBottom) {
+                  scrollArea.scrollTop += e.deltaY;
+                  e.preventDefault();
+                }
+              }
+            }
+          }, { passive: false });
+        }
+      });
+
+      // Display Limit Handler for Admin Table
+      function changeAdminDisplayLimit(limit) {
+        const rows = document.querySelectorAll('.student-row');
+        const countSpan = document.getElementById('tableVisibleCount');
+        const recordCountSpan = document.getElementById('recordCount');
+        const numLimit = limit === 'all' ? rows.length : parseInt(limit, 10);
+        let shown = 0;
+
+        rows.forEach((row, idx) => {
+          if (idx < numLimit) {
+            row.style.display = '';
+            shown++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        if (countSpan) countSpan.innerText = shown;
+        if (recordCountSpan) recordCountSpan.innerText = shown;
+        const scrollArea = document.getElementById('tableScrollArea');
+        if (scrollArea) scrollArea.scrollTo({top: 0, behavior: 'smooth'});
+      }
+
+      // Client side instant table search
+      function filterTable() {
+        const input = document.getElementById('liveSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('.student-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          if (text.includes(input)) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        document.getElementById('recordCount').innerText = visibleCount;
+      }
+
+      // Quick View Modal Fetcher
+      function openQuickView(roll) {
+        const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+        const modalBody = document.getElementById('modalBodyContent');
+        const modalName = document.getElementById('modalStudentName');
+        const modalRollSem = document.getElementById('modalRollSem');
+        const modalAvatar = document.getElementById('modalAvatar');
+        const fullProfileBtn = document.getElementById('modalFullProfileBtn');
+
+        fullProfileBtn.href = `/student/${roll}`;
+        modalBody.innerHTML = `
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Fetching student details...</p>
+          </div>`;
+        modal.show();
+
+        fetch(`/api/student/${roll}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              modalBody.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+              return;
+            }
+
+            const s = data.student;
+            modalName.innerText = s.Name;
+            modalAvatar.innerText = s.Name[0];
+            modalRollSem.innerText = `Roll: ${s.Roll} | Semester ${s.Semester} | Division ${s.Division}`;
+
+            let rowsHtml = '';
+            data.subjects_list.forEach(subj => {
+              rowsHtml += `
+                <tr>
+                  <td class="fw-semibold">${subj.subject}</td>
+                  <td class="text-center">${subj.internal} / 30</td>
+                  <td class="text-center">${subj.external} / 70</td>
+                  <td class="text-center fw-bold">${subj.total}</td>
+                  <td class="text-center"><span class="badge bg-primary-subtle text-primary">${subj.grade}</span></td>
+                  <td class="text-center">${subj.attendance}%</td>
+                </tr>`;
+            });
+
+            modalBody.innerHTML = `
+              <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                  <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="text-muted fs-8 text-uppercase fw-bold d-block mb-1">SGPI Score</span>
+                    <h2 class="fw-bold text-primary mb-0">${s.SGPI} / 10.0</h2>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="text-muted fs-8 text-uppercase fw-bold d-block mb-1">Overall Attendance</span>
+                    <h2 class="fw-bold ${s.Attendance >= 75 ? 'text-success' : 'text-danger'} mb-0">${s.Attendance}%</h2>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="text-muted fs-8 text-uppercase fw-bold d-block mb-1">Academic Risk</span>
+                    <h2 class="fw-bold ${data.academic_risk === 'High' ? 'text-danger' : 'text-success'} mb-0">${data.academic_risk}</h2>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-4">
+                <div class="col-md-6"><i class="bi bi-envelope text-primary me-2"></i> <strong>Email:</strong> ${s.Email || 'N/A'}</div>
+                <div class="col-md-6"><i class="bi bi-telephone text-primary me-2"></i> <strong>Phone:</strong> ${s.Phone || 'N/A'}</div>
+                <div class="col-md-6"><i class="bi bi-gender-ambiguous text-primary me-2"></i> <strong>Gender:</strong> ${s.Gender || 'N/A'}</div>
+                <div class="col-md-6"><i class="bi bi-calendar text-primary me-2"></i> <strong>Admission Year:</strong> ${s.Admission_Year || 'N/A'}</div>
+              </div>
+
+              <h6 class="fw-bold mb-3">Subject Breakdown</h6>
+              <div class="table-responsive border rounded-3 mb-3">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Subject</th>
+                      <th class="text-center">Internal</th>
+                      <th class="text-center">External</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Grade</th>
+                      <th class="text-center">Att. %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>`;
+          })
+          .catch(err => {
+            modalBody.innerHTML = `<div class="alert alert-danger">Error loading data.</div>`;
+          });
+      }
+
+      // Chart.js Initializations
+      if (students.length > 0) {
+        const isMobileScreen = window.innerWidth < 768;
+
+        // 1. Subject Average Chart
+        const subjLabels = Object.keys(subjectAveragesData);
+        const subjValues = Object.values(subjectAveragesData);
+
+        new Chart(document.getElementById('subjectAverageChart').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: subjLabels.length > 0 ? subjLabels : ['No Data'],
+            datasets: [{
+              label: 'Average Score',
+              data: subjValues.length > 0 ? subjValues : [0],
+              backgroundColor: '#2563EB',
+              borderRadius: 8,
+              barThickness: isMobileScreen ? 16 : 32
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false }, ticks: { font: { size: isMobileScreen ? 10 : 12 } } }
+            }
+          }
+        });
+
+        // 2. Grade Distribution Chart
+        const gradeLabels = Object.keys(gradeDistributionData);
+        const gradeValues = Object.values(gradeDistributionData);
+
+        new Chart(document.getElementById('gradeDistributionChart').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: gradeLabels,
+            datasets: [{
+              data: gradeValues,
+              backgroundColor: [
+                '#16A34A', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#F59E0B', '#DC2626'
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: isMobileScreen ? 'bottom' : 'right',
+                labels: { boxWidth: 12, font: { size: isMobileScreen ? 11 : 12 } }
+              }
+            }
+          }
+        });
+
+        // 3. Attendance Distribution
+        const lowAtt = students.filter(s => s.Attendance < 75).length;
+        const medAtt = students.filter(s => s.Attendance >= 75 && s.Attendance < 90).length;
+        const highAtt = students.filter(s => s.Attendance >= 90).length;
+
+        new Chart(document.getElementById('attendanceDistributionChart').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['Low (<75%)', 'Med (75-90%)', 'High (≥90%)'],
+            datasets: [{
+              data: [lowAtt, medAtt, highAtt],
+              backgroundColor: ['#DC2626', '#F59E0B', '#16A34A'],
+              borderRadius: 8,
+              barThickness: isMobileScreen ? 16 : 28
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(226, 232, 240, 0.8)' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+
+        // 4. SGPI Distribution Bins
+        const sgpiBins = [0, 0, 0, 0, 0];
+        students.forEach(s => {
+          if (s.SGPI < 6.0) sgpiBins[0]++;
+          else if (s.SGPI < 7.0) sgpiBins[1]++;
+          else if (s.SGPI < 8.0) sgpiBins[2]++;
+          else if (s.SGPI < 9.0) sgpiBins[3]++;
+          else sgpiBins[4]++;
+        });
+
+        new Chart(document.getElementById('sgpiDistributionChart').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['< 6.0', '6.0-7.0', '7.0-8.0', '8.0-9.0', '9.0-10.0'],
+            datasets: [{
+              data: sgpiBins,
+              backgroundColor: '#2563EB',
+              borderRadius: 8,
+              barThickness: isMobileScreen ? 16 : 28
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+
+        // 5. Top Students Chart
+        const topStudents = [...students].sort((a, b) => b.SGPI - a.SGPI).slice(0, 10);
+        const topNames = topStudents.map(s => s.Name.split(' ')[0]);
+        const topSgpis = topStudents.map(s => s.SGPI);
+
+        new Chart(document.getElementById('topStudentsChart').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: topNames,
+            datasets: [{
+              data: topSgpis,
+              backgroundColor: '#3B82F6',
+              borderRadius: 8,
+              barThickness: isMobileScreen ? 12 : 20
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, max: 10, grid: { color: 'rgba(226, 232, 240, 0.8)' } },
+              x: { grid: { display: false }, ticks: { font: { size: isMobileScreen ? 10 : 12 } } }
+            }
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Academic Intelligence | Teacher Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+      }
+
+      /* Navbar */
+      .navbar-custom {
+        background-color: var(--navbar-bg) !important;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .brand-badge {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      /* Hero Section */
+      .hero-card {
+        background: var(--hero-bg) !important;
+        border-radius: 20px;
+        color: var(--hero-text) !important;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--hero-border) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+        border-radius: 50%;
+      }
+
+      /* Assignment Selector Tabs/Pills */
+      .assignment-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        text-decoration: none;
+        color: var(--text-primary);
+        display: block;
+      }
+
+      .assignment-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+        color: var(--primary);
+      }
+
+      .assignment-card.active {
+        border-color: var(--primary) !important;
+        background: rgba(37, 99, 235, 0.08) !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+      }
+
+      /* KPI Cards */
+      .kpi-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.06);
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+      }
+
+      .kpi-primary::before { background-color: var(--primary); }
+      .kpi-success::before { background-color: var(--success); }
+      .kpi-info::before { background-color: var(--secondary); }
+      .kpi-warning::before { background-color: var(--warning); }
+      .kpi-secondary::before { background-color: var(--secondary); }
+
+      .icon-circle {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+      }
+
+      .chart-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+      }
+
+      .badge-soft-success { background-color: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; }
+      .badge-soft-info { background-color: rgba(6, 182, 212, 0.15); color: #06b6d4; font-weight: 600; }
+      .badge-soft-warning { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 600; }
+      .badge-soft-danger { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 600; }
+
+      .table-custom {
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .table-custom thead th {
+        background-color: var(--table-header-bg);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--table-header-text);
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.9rem 1rem;
+      }
+
+      .table-custom tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.92rem;
+      }
+
+      .table-custom tbody tr:hover td {
+        background-color: var(--table-row-hover);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-2">
+      <div class="container-fluid px-3 px-md-4">
+        <a class="navbar-brand d-flex align-items-center text-decoration-none" href="{{ url_for('teacher_dashboard') }}">
+          <span class="brand-badge me-2"><i class="bi bi-mortarboard-fill me-1"></i> Academic Intelligence</span>
+        </a>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+          <a href="{{ url_for('question_paper.index') }}" class="btn btn-outline-info btn-sm rounded-pill px-2.5 px-md-3">
+            <i class="bi bi-file-earmark-check-fill me-1"></i> <span class="d-none d-sm-inline">Paper </span>Intelligence
+          </a>
+          <a href="{{ url_for('teacher_reports', subject=selected_subject, semester=selected_semester) }}" class="btn btn-outline-primary btn-sm rounded-pill px-2.5 px-md-3">
+            <i class="bi bi-file-earmark-bar-graph-fill me-1"></i> Reports
+          </a>
+          <div class="d-none d-md-flex align-items-center user-badge-pill px-3 py-1.5 rounded-pill small">
+            <i class="bi bi-person-badge-fill text-primary me-2"></i>
+            <span class="fw-semibold me-2">{{ teacher_name }}</span>
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">{{ teacher_id }}</span>
+          </div>
+
+          <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-pill" type="button" aria-label="Toggle Theme">
+            <span>☀️ Light</span><span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+          </button>
+
+          <a href="{{ url_for('teacher_logout') }}" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 px-md-3">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid px-3 px-md-4 py-4">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show rounded-3 p-3 mb-4 shadow-sm" role="alert">
+              <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Hero Header Card -->
+      <div class="hero-card p-4 p-md-5 mb-4 shadow-sm">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+          <div class="col-lg-8">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span class="badge bg-primary bg-opacity-50 text-white border border-primary border-opacity-50 px-3 py-1 rounded-pill">
+                <i class="bi bi-person-video3 me-1"></i> Teacher Dashboard
+              </span>
+              <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill">
+                Active Faculty
+              </span>
+            </div>
+            <h2 class="display-6 fw-extrabold mb-1">Welcome, {{ teacher_name }}</h2>
+            <p class="mb-0" style="opacity: 0.85;">
+              Managing <strong>{{ assignments|length }}</strong> assigned subject{% if assignments|length != 1 %}s{% endif %}. Currently inspecting performance and attendance for <strong>{{ selected_subject }}</strong> (Semester {{ selected_semester }}).
+            </p>
+          </div>
+          <div class="col-lg-4 text-start text-lg-end mt-3 mt-lg-0">
+            <div class="hero-stat-box p-3 rounded-4 d-inline-block text-start">
+              <div class="small opacity-75">Faculty ID</div>
+              <div class="fw-bold fs-5">{{ teacher_id }}</div>
+              {% if teacher_email %}
+                <div class="small opacity-75 mt-1 text-truncate" style="max-width: 250px;"><i class="bi bi-envelope me-1"></i>{{ teacher_email }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teaching Assignments Selector -->
+      <div class="mb-4">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-1 mb-3">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-journals text-primary me-2"></i>My Teaching Assignments
+          </h5>
+          <span class="text-muted small">Select an assigned subject to load analytics</span>
+        </div>
+
+        <div class="row g-3">
+          {% for item in assignments %}
+            {% set is_active_card = (item.Subject == selected_subject and item.Semester == selected_semester) %}
+            <div class="col-12 col-md-6 col-lg-4">
+              <a href="{{ url_for('teacher_dashboard', subject=item.Subject, semester=item.Semester) }}"
+                 class="assignment-card {% if is_active_card %}active{% endif %}">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle {% if is_active_card %}bg-primary text-white{% else %}bg-light text-primary{% endif %}">
+                      <i class="bi bi-book-half"></i>
+                    </div>
+                    <div>
+                      <h6 class="fw-bold mb-1 {% if is_active_card %}text-primary{% else %}text-dark{% endif %}">{{ item.Subject }}</h6>
+                      <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2.5">
+                        Semester {{ item.Semester }}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    {% if is_active_card %}
+                      <span class="badge bg-primary text-white rounded-pill px-2 py-1 small">
+                        <i class="bi bi-check-circle-fill me-1"></i> Active
+                      </span>
+                    {% else %}
+                      <i class="bi bi-chevron-right text-muted"></i>
+                    {% endif %}
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- KPI Metrics Overview -->
+      <div class="row g-3 mb-4">
+        <!-- Total Students -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-primary p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">Students</span>
+              <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0">{{ kpis.total_students }}</h3>
+            <span class="text-muted small">Enrolled Class</span>
+          </div>
+        </div>
+
+        <!-- Average Marks -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-success p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">Avg Marks</span>
+              <div class="icon-circle bg-success bg-opacity-10 text-success">
+                <i class="bi bi-trophy-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-success">{{ kpis.average_marks }}</h3>
+            <span class="text-muted small">Out of 100</span>
+          </div>
+        </div>
+
+        <!-- Highest Marks -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-info p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">Highest Score</span>
+              <div class="icon-circle bg-primary bg-opacity-10 text-primary" style="background-color: rgba(37, 99, 235, 0.1); color: var(--primary);">
+                <i class="bi bi-star-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-primary">{{ kpis.highest_marks }}</h3>
+            <span class="text-muted small">Top (Min: {{ kpis.lowest_marks }})</span>
+          </div>
+        </div>
+
+        <!-- Average Attendance -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-info p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">Avg Attendance</span>
+              <div class="icon-circle bg-info bg-opacity-10 text-info">
+                <i class="bi bi-calendar-check-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-info">{{ kpis.average_attendance }}%</h3>
+            <span class="text-muted small">Class Attendance</span>
+          </div>
+        </div>
+
+        <!-- Pass Rate -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-warning p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">Pass Rate</span>
+              <div class="icon-circle bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-warning">{{ kpis.pass_percentage }}%</h3>
+            <span class="text-muted small">Passing (&gt;=40)</span>
+          </div>
+        </div>
+
+        <!-- At-Risk Count -->
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="kpi-card kpi-danger p-3 h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small fw-semibold">At-Risk</span>
+              <div class="icon-circle bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-danger">{{ kpis.at_risk_count }}</h3>
+            <span class="text-muted small">Needs Intervention</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Charts Section -->
+      <div class="row g-3 mb-4">
+        <!-- Chart 1: Grade Distribution -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="chart-card p-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-bar-chart-fill text-primary me-2"></i>Grade Distribution
+              </h6>
+              <span class="badge bg-light text-muted border">Grades</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+              <canvas id="gradeDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart 2: Marks Score Range -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="chart-card p-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-pie-chart-fill text-info me-2"></i>Score Range Breakdown
+              </h6>
+              <span class="badge bg-light text-muted border">Marks / 100</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+              <canvas id="marksDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart 3: Attendance Breakdown -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="chart-card p-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-check2-circle text-success me-2"></i>Attendance Distribution
+              </h6>
+              <span class="badge bg-light text-muted border">Attendance %</span>
+            </div>
+            <div style="position: relative; height: 260px;">
+              <canvas id="attendanceDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- At-Risk Students Action Panel (if any) -->
+      {% if at_risk_students %}
+        <div class="card border-danger border-opacity-25 rounded-4 shadow-sm mb-4">
+          <div class="card-header bg-danger bg-opacity-10 py-3 px-4 rounded-top-4 border-0 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-shield-exclamation text-danger fs-5"></i>
+              <h6 class="fw-bold mb-0 text-danger">At-Risk Students Requiring Attention ({{ at_risk_students|length }})</h6>
+            </div>
+            <span class="badge bg-danger text-white rounded-pill px-3 py-1.5 small">
+              Attendance &lt; 75% OR Score &lt; 40
+            </span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-custom table-hover mb-0" style="min-width: 650px;">
+                <thead>
+                  <tr>
+                    <th class="text-nowrap">Roll No</th>
+                    <th>Student Name</th>
+                    <th class="text-nowrap">Subject Score</th>
+                    <th>Grade</th>
+                    <th>Attendance</th>
+                    <th>Reason / Risk Flag</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in at_risk_students %}
+                    <tr>
+                      <td class="fw-bold text-dark">{{ s.Roll }}</td>
+                      <td>{{ s.Name }}</td>
+                      <td>
+                        {% if s.Total < 40 %}
+                          <span class="fw-bold text-danger">{{ s.Total }}/100</span>
+                        {% else %}
+                          <span class="fw-bold text-dark">{{ s.Total }}/100</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if s.Grade == 'F' %}
+                          <span class="badge badge-soft-danger">{{ s.Grade }}</span>
+                        {% else %}
+                          <span class="badge badge-soft-warning">{{ s.Grade }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if s.Attendance < 75 %}
+                          <span class="badge badge-soft-danger">{{ s.Attendance }}%</span>
+                        {% else %}
+                          <span class="badge badge-soft-success">{{ s.Attendance }}%</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <span class="badge badge-soft-danger">
+                          <i class="bi bi-exclamation-circle-fill me-1"></i> {{ s.risk_reason }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <a href="{{ url_for('student_profile', roll=s.Roll) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                          <i class="bi bi-person-lines-fill me-1"></i> View Profile
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Enrolled Students Table Roster -->
+      <div class="card table-card border-0 rounded-4 shadow-sm">
+        <div class="card-header bg-white py-3 px-3 px-md-4 rounded-top-4 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-table text-primary me-2"></i>Class Performance Roster
+              </h5>
+              <span id="rosterCountBadge" class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2.5 py-1 small">
+                Showing 10 of {{ students|length }} students
+              </span>
+            </div>
+            <p class="text-muted small mb-0">Enrolled students in <strong>{{ selected_subject }}</strong> (Semester {{ selected_semester }})</p>
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+            <!-- Attendance Status Legend -->
+            <div class="attendance-status-legend">
+              <span class="legend-title">Attendance:</span>
+              <span class="legend-item"><span class="legend-dot dot-safe"></span> &ge; 75% Safe</span>
+              <span class="legend-item"><span class="legend-dot dot-risk"></span> &lt; 75% Low</span>
+            </div>
+
+            <div class="table-scroll-hint d-md-none me-auto">
+              <i class="bi bi-arrows-expand"></i> Swipe horizontally
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <label for="displayLimitSelect" class="small text-muted fw-semibold text-nowrap mb-0">Display:</label>
+              <select id="displayLimitSelect" class="form-select form-select-sm bg-light border" style="width: auto;">
+                <option value="10" selected>Top 10</option>
+                <option value="all">All Students</option>
+              </select>
+            </div>
+
+            <div class="input-group input-group-sm" style="min-width: 170px; max-width: 220px;">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" id="rosterSearch" class="form-control bg-light border-start-0" placeholder="Search Roll or Name..." />
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive table-wrapper table-scroll-container">
+            <table class="table table-custom table-hover mb-0" id="rosterTable" style="min-width: 720px;">
+              <thead>
+                <tr>
+                  <th class="col-roll text-nowrap">Roll No</th>
+                  <th class="col-student student-name-col">Student Name</th>
+                  <th class="text-center numeric-col">Internal<br class="d-none d-sm-inline"><span class="small opacity-75">(/30)</span></th>
+                  <th class="text-center numeric-col">External<br class="d-none d-sm-inline"><span class="small opacity-75">(/70)</span></th>
+                  <th class="text-center numeric-col">Total<br class="d-none d-sm-inline"><span class="small opacity-75">(/100)</span></th>
+                  <th class="text-center numeric-col">Grade</th>
+                  <th class="text-center attendance-col">Attendance</th>
+                  <th class="text-center status-col">Status</th>
+                  <th class="text-end col-actions">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in students %}
+                  <tr>
+                    <td class="col-roll fw-bold text-primary">{{ s.Roll }}</td>
+                    <td class="col-student fw-semibold text-break student-name-col">{{ s.Name }}</td>
+                    <td class="text-center numeric-col">{{ s.Internal }}</td>
+                    <td class="text-center numeric-col">{{ s.External }}</td>
+                    <td class="text-center numeric-col fw-bold text-primary">{{ s.Total }}</td>
+                    <td class="text-center numeric-col">
+                      {% if s.Grade in ['O', 'A+', 'A'] %}
+                        <span class="badge badge-soft-success">{{ s.Grade }}</span>
+                      {% elif s.Grade in ['B+', 'B', 'C', 'P'] %}
+                        <span class="badge badge-soft-info">{{ s.Grade }}</span>
+                      {% else %}
+                        <span class="badge badge-soft-danger">{{ s.Grade }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center attendance-col">
+                      {% if s.Attendance >= 85 %}
+                        <span class="badge badge-soft-success">{{ s.Attendance }}%</span>
+                      {% elif s.Attendance >= 75 %}
+                        <span class="badge badge-soft-info">{{ s.Attendance }}%</span>
+                      {% else %}
+                        <span class="badge badge-soft-danger">{{ s.Attendance }}%</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center status-col">
+                      {% if s.is_risk %}
+                        <span class="badge badge-soft-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>At Risk</span>
+                      {% elif s.status == 'Honors' %}
+                        <span class="badge badge-soft-primary"><i class="bi bi-star-fill me-1"></i>Honors</span>
+                      {% else %}
+                        <span class="badge badge-soft-success"><i class="bi bi-check-circle-fill me-1"></i>Good</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end col-actions">
+                      <a href="{{ url_for('student_profile', roll=s.Roll) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-2.5 py-1 text-nowrap">
+                        <i class="bi bi-eye me-1"></i>View
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chart Data Storage Tag (Prevents JavaScript linting errors in VS Code) -->
+    <script id="teacherChartPayload" type="application/json">
+      {
+        "gradeLabels": {{ grade_distribution.keys()|list|tojson }},
+        "gradeCounts": {{ grade_distribution.values()|list|tojson }},
+        "marksLabels": {{ marks_distribution.keys()|list|tojson }},
+        "marksCounts": {{ marks_distribution.values()|list|tojson }},
+        "attLabels": {{ attendance_distribution.keys()|list|tojson }},
+        "attCounts": {{ attendance_distribution.values()|list|tojson }}
+      }
+    </script>
+
+    <!-- Chart.js & Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      // Load chart datasets from JSON payload
+      const chartPayload = JSON.parse(document.getElementById('teacherChartPayload').textContent);
+      const gradeLabels = chartPayload.gradeLabels;
+      const gradeCounts = chartPayload.gradeCounts;
+      const marksLabels = chartPayload.marksLabels;
+      const marksCounts = chartPayload.marksCounts;
+      const attLabels = chartPayload.attLabels;
+      const attCounts = chartPayload.attCounts;
+
+      // 1. Grade Distribution Chart
+      const gradeCtx = document.getElementById('gradeDistributionChart').getContext('2d');
+      new Chart(gradeCtx, {
+        type: 'bar',
+        data: {
+          labels: gradeLabels,
+          datasets: [{
+            label: 'Students',
+            data: gradeCounts,
+            backgroundColor: [
+              '#16A34A',
+              '#2563EB',
+              '#3B82F6',
+              '#60A5FA',
+              '#93C5FD',
+              '#F59E0B',
+              '#DC2626',
+              '#94A3B8'
+            ],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          }
+        }
+      });
+
+      // 2. Marks Score Range Breakdown Chart
+      const marksCtx = document.getElementById('marksDistributionChart').getContext('2d');
+      new Chart(marksCtx, {
+        type: 'doughnut',
+        data: {
+          labels: marksLabels,
+          datasets: [{
+            data: marksCounts,
+            backgroundColor: [
+              '#DC2626',
+              '#F59E0B',
+              '#2563EB',
+              '#3B82F6',
+              '#16A34A'
+            ],
+            borderWidth: 2,
+            borderColor: 'var(--bg-secondary)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 11 } }
+            }
+          }
+        }
+      });
+
+      // 3. Attendance Distribution Chart
+      const attCtx = document.getElementById('attendanceDistributionChart').getContext('2d');
+      new Chart(attCtx, {
+        type: 'doughnut',
+        data: {
+          labels: attLabels,
+          datasets: [{
+            data: attCounts,
+            backgroundColor: [
+              '#DC2626',
+              '#3B82F6',
+              '#16A34A'
+            ],
+            borderWidth: 2,
+            borderColor: 'var(--bg-secondary)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 11 } }
+            }
+          }
+        }
+      });
+
+      // Roster Table Client-side Search and Display Limit (Top 10 vs All) Filter
+      const searchInput = document.getElementById('rosterSearch');
+      const displaySelect = document.getElementById('displayLimitSelect');
+      const countBadge = document.getElementById('rosterCountBadge');
+      const tableRows = Array.from(document.querySelectorAll('#rosterTable tbody tr'));
+      const totalCohortCount = tableRows.length;
+
+      function updateRosterView() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const limitMode = displaySelect ? displaySelect.value : '10';
+
+        if (query !== '') {
+          // In search mode: Search across all students in the current cohort
+          let matchCount = 0;
+          tableRows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const matches = text.includes(query);
+            row.style.display = matches ? '' : 'none';
+            if (matches) matchCount++;
+          });
+          if (countBadge) {
+            countBadge.textContent = `Showing ${matchCount} of ${totalCohortCount} matching students`;
+          }
+        } else {
+          // No search query: Apply display limit (Top 10 vs All)
+          if (limitMode === '10') {
+            const visibleLimit = Math.min(10, totalCohortCount);
+            tableRows.forEach((row, index) => {
+              row.style.display = index < 10 ? '' : 'none';
+            });
+            if (countBadge) {
+              countBadge.textContent = `Showing ${visibleLimit} of ${totalCohortCount} students`;
+            }
+          } else {
+            tableRows.forEach(row => {
+              row.style.display = '';
+            });
+            if (countBadge) {
+              countBadge.textContent = `Showing all ${totalCohortCount} students`;
+            }
+          }
+        }
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', updateRosterView);
+      }
+      if (displaySelect) {
+        displaySelect.addEventListener('change', updateRosterView);
+      }
+
+      // Initialize view on page load (defaults to Top 10)
+      updateRosterView();
+    </script>
+  </body>
+</html>
