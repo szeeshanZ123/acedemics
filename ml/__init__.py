@@ -9,7 +9,12 @@ from .predictor import (
     calculate_predicted_grade,
     classify_predicted_performance,
 )
-from .model import build_regression_pipeline
+
+
+def build_regression_pipeline(*args, **kwargs):
+    """Load the optional scikit-learn training helper on demand."""
+    from .model import build_regression_pipeline as build_pipeline
+    return build_pipeline(*args, **kwargs)
 
 __all__ = [
     "predict_external_marks",

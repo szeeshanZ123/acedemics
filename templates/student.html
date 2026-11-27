@@ -331,7 +331,7 @@
             </div>
             {% if session.get('admin_logged_in') %}
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-semibold fs-8">
-              <i class="bi bi-stars me-1"></i> Random Forest Regressor
+              <i class="bi bi-stars me-1"></i> {{ model_info.model_name if model_info else 'Performance Forecast' }}
             </span>
             {% else %}
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-semibold fs-8">
@@ -435,7 +435,7 @@
             <div class="d-flex align-items-center gap-2">
               <i class="bi bi-info-circle text-primary"></i>
               <span class="fw-bold fs-7" style="color: var(--text-primary);">AI Model Information & Evaluation Metrics (Admin View)</span>
-              <span class="badge bg-light text-secondary border fs-8">R² = {{ model_info.r2_score if model_info else '0.71' }}</span>
+              <span class="badge bg-light text-secondary border fs-8">{% if model_info and model_info.r2_score is not none %}R² = {{ model_info.r2_score }}{% else %}Prototype estimate{% endif %}</span>
             </div>
             <i class="bi bi-chevron-down fs-8 text-secondary"></i>
           </div>
@@ -444,30 +444,40 @@
               <div class="row g-3">
                 <div class="col-sm-6 col-md-3">
                   <small class="text-uppercase fw-semibold fs-8 d-block mb-1" style="color: var(--text-secondary);">Model Architecture</small>
-                  <span class="fw-bold fs-7" style="color: var(--text-primary);">Random Forest Regressor</span>
-                  <small class="d-block text-muted fs-8">OneHotEncoder + Pipeline</small>
+                  <span class="fw-bold fs-7" style="color: var(--text-primary);">{{ model_info.model_name if model_info else 'Historical Cohort Estimate' }}</span>
+                  <small class="d-block text-muted fs-8">{{ model_info.pipeline_architecture if model_info else 'Historical marks and attendance' }}</small>
                 </div>
                 <div class="col-sm-6 col-md-3">
                   <small class="text-uppercase fw-semibold fs-8 d-block mb-1" style="color: var(--text-secondary);">Input Features</small>
-                  <span class="fw-bold fs-7" style="color: var(--text-primary);">Internal, Attendance, Semester, Subject</span>
-                  <small class="d-block text-muted fs-8">Target: External (0–70)</small>
+                  <span class="fw-bold fs-7" style="color: var(--text-primary);">{{ model_info.features|join(', ') if model_info else 'Internal, Attendance, Semester, Subject' }}</span>
+                  <small class="d-block text-muted fs-8">Target: {{ model_info.target if model_info else 'External' }} (0–70)</small>
                 </div>
                 <div class="col-sm-6 col-md-3">
                   <small class="text-uppercase fw-semibold fs-8 d-block mb-1" style="color: var(--text-secondary);">Evaluation (MAE / RMSE)</small>
-                  <span class="fw-bold fs-7" style="color: var(--text-primary);">MAE: {{ model_info.model_mae if model_info else '4.72' }} | RMSE: {{ model_info.rmse if model_info else '5.77' }}</span>
-                  <small class="d-block text-muted fs-8">Test Split: 80 / 20 (288 test records)</small>
+                  {% if model_info and model_info.model_mae is not none %}
+                  <span class="fw-bold fs-7" style="color: var(--text-primary);">MAE: {{ model_info.model_mae }} | RMSE: {{ model_info.rmse }}</span>
+                  <small class="d-block text-muted fs-8">Test Split: {{ model_info.split_ratio }} ({{ model_info.test_records }} test records)</small>
+                  {% else %}
+                  <span class="fw-bold fs-7" style="color: var(--text-primary);">No evaluation score published</span>
+                  <small class="d-block text-muted fs-8">Prototype estimate from sample records</small>
+                  {% endif %}
                 </div>
                 <div class="col-sm-6 col-md-3">
                   <small class="text-uppercase fw-semibold fs-8 d-block mb-1" style="color: var(--text-secondary);">Baseline Improvement</small>
-                  <span class="fw-bold text-success fs-7">+{{ model_info.improvement_pct if model_info else '46.58' }}%</span>
-                  <small class="d-block text-muted fs-8">vs Mean Predictor (MAE 8.84)</small>
+                  {% if model_info and model_info.improvement_pct is not none %}
+                  <span class="fw-bold text-success fs-7">+{{ model_info.improvement_pct }}%</span>
+                  <small class="d-block text-muted fs-8">vs Mean Predictor (MAE {{ model_info.baseline_mae }})</small>
+                  {% else %}
+                  <span class="fw-bold fs-7" style="color: var(--text-primary);">Not evaluated</span>
+                  <small class="d-block text-muted fs-8">Prototype mode</small>
+                  {% endif %}
                 </div>
               </div>
               <hr class="my-2" style="border-color: var(--border-color); opacity: 0.5;">
               <p class="fs-8 mb-0" style="color: var(--text-secondary);">
                 <i class="bi bi-check-circle text-primary me-1"></i>
-                {{ model_info.description if model_info else "AI predictions are generated using internal marks, attendance, semester, and subject information." }}
-                {{ model_info.r2_explanation if model_info else "The model achieved an R² score of approximately 0.71 on the held-out test dataset." }}
+                {{ model_info.description if model_info else "Estimates use internal marks, attendance, semester, and subject information." }}
+                {{ model_info.r2_explanation if model_info else "No accuracy score is claimed for this estimate." }}
               </p>
             </div>
           </div>

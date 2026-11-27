@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "app.py": {
-      "excludeFiles": "{tests/**,**/test_*.py,ml/train_model.py,visualization/**,question_paper/samples/generate_sem3_sample.py,screenshots/**}"
+      "excludeFiles": "{tests/**,**/test_*.py,ml/model.py,ml/train_model.py,ml/models/**,visualization/**,question_paper/samples/generate_sem3_sample.py,screenshots/**}"
     }
   }
 }

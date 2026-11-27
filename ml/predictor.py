@@ -10,7 +10,7 @@ Phase 8.2: Academic Performance and Examination Intelligence System.
 from pathlib import Path
 from typing import Dict, Union, Optional, Tuple, Any
 import math
-import joblib
+import importlib.util
 import numpy as np
 import pandas as pd
 
@@ -19,6 +19,7 @@ DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / "models" / "external_mark
 
 # Cache loaded model in memory for efficiency
 _CACHED_MODEL = None
+_COHORT_MODEL = None
 
 
 def load_model(model_path: Optional[Union[str, Path]] = None):
@@ -33,15 +34,79 @@ def load_model(model_path: Optional[Union[str, Path]] = None):
         return _CACHED_MODEL
 
     if not target_path.exists():
-        raise FileNotFoundError(
-            f"Trained model file not found at: {target_path}\n"
-            f"Please run 'python ml/train_model.py' to train and save the model first."
-        )
+        if model_path is not None:
+            raise FileNotFoundError(f"Trained model file not found at: {target_path}")
+        return None
+
+    # Keep the serialized Random Forest available for local development, while
+    # allowing the small Vercel runtime to use the built-in cohort estimator.
+    try:
+        import joblib
+    except ImportError:
+        if model_path is not None:
+            raise FileNotFoundError("Optional Random Forest dependencies are not installed.")
+        return None
+
+    if not target_path.exists():
+        if model_path is not None:
+            raise FileNotFoundError(f"Trained model file not found at: {target_path}")
+        return None
 
     model = joblib.load(target_path)
     if model_path is None:
         _CACHED_MODEL = model
     return model
+
+
+def _load_cohort_model():
+    """Fit a small least-squares estimator from bundled historical records."""
+    global _COHORT_MODEL
+    if _COHORT_MODEL is not None:
+        return _COHORT_MODEL
+
+    from utils.data_loader import load_data
+
+    _, _, marks_df, attendance_df, _ = load_data()
+    history = marks_df.merge(
+        attendance_df[["Roll_No", "Semester", "Subject", "Attendance"]],
+        on=["Roll_No", "Semester", "Subject"],
+        how="left",
+    )
+    history["Attendance"] = pd.to_numeric(history["Attendance"], errors="coerce").fillna(0)
+    history["Internal"] = pd.to_numeric(history["Internal"], errors="coerce").fillna(0)
+    history["External"] = pd.to_numeric(history["External"], errors="coerce").fillna(0)
+    history["Semester"] = pd.to_numeric(history["Semester"], errors="coerce").fillna(1)
+
+    subjects = sorted(history["Subject"].dropna().astype(str).unique().tolist())
+    subject_index = {subject: index for index, subject in enumerate(subjects[1:])}
+    features = np.zeros((len(history), 4 + len(subject_index)), dtype=float)
+    features[:, 0] = 1.0
+    features[:, 1] = history["Internal"].to_numpy(dtype=float) / 30.0
+    features[:, 2] = history["Attendance"].to_numpy(dtype=float) / 100.0
+    features[:, 3] = history["Semester"].to_numpy(dtype=float) / 6.0
+    for row_index, subject in enumerate(history["Subject"].astype(str)):
+        column = subject_index.get(subject)
+        if column is not None:
+            features[row_index, 4 + column] = 1.0
+
+    targets = history["External"].to_numpy(dtype=float)
+    coefficients, *_ = np.linalg.lstsq(features, targets, rcond=None)
+    _COHORT_MODEL = (subjects, subject_index, coefficients)
+    return _COHORT_MODEL
+
+
+def _predict_from_cohort(internal_marks: float, attendance: float, semester: int, subject: str) -> float:
+    """Estimate external marks from historical cohort patterns without sklearn."""
+    subjects, subject_index, coefficients = _load_cohort_model()
+    features = np.zeros(len(coefficients), dtype=float)
+    features[0] = 1.0
+    features[1] = float(internal_marks) / 30.0
+    features[2] = float(attendance) / 100.0
+    features[3] = int(semester) / 6.0
+    column = subject_index.get(str(subject).strip())
+    if column is not None:
+        features[4 + column] = 1.0
+    return float(np.dot(features, coefficients))
 
 
 def validate_prediction_inputs(
@@ -132,6 +197,10 @@ def predict_external_marks(
         raise ValueError(f"Invalid prediction input: {err}")
 
     model = load_model(model_path)
+
+    if model is None:
+        prediction = _predict_from_cohort(internal_marks, attendance, semester, subject)
+        return round(min(70.0, max(0.0, prediction)), 1)
 
     # Construct feature DataFrame with EXACT column names expected by pipeline
     # Strictly avoids data leakage (no Total, Grade, SGPI, or post-exam values)
@@ -376,6 +445,27 @@ def get_model_info() -> Dict[str, Any]:
     Returns transparent metadata, architecture details, and verified evaluation metrics
     for the trained ML model pipeline.
     """
+    if importlib.util.find_spec("joblib") is None or not DEFAULT_MODEL_PATH.exists():
+        from utils.data_loader import load_data
+        _, _, marks_df, _, _ = load_data()
+        return {
+            "model_name": "Historical Cohort Estimate",
+            "pipeline_architecture": "Lightweight least-squares regression over bundled student records",
+            "features": ["Internal", "Attendance", "Semester", "Subject"],
+            "target": "External",
+            "total_records": len(marks_df),
+            "train_records": None,
+            "test_records": None,
+            "split_ratio": None,
+            "baseline_mae": None,
+            "model_mae": None,
+            "rmse": None,
+            "r2_score": None,
+            "improvement_pct": None,
+            "description": "Estimates use historical marks and attendance from the bundled sample dataset.",
+            "r2_explanation": "This lightweight estimate is provided for prototype demonstration and has no published evaluation score.",
+        }
+
     return {
         "model_name": "Random Forest Regressor",
         "pipeline_architecture": "ColumnTransformer + OneHotEncoder(handle_unknown='ignore') + RandomForestRegressor",

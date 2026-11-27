@@ -1,6 +1,6 @@
 """File processing and text extraction utility for AI Study Assistant.
 
-Supports PDF (via PyMuPDF / fitz), DOCX (python-docx), TXT, and Images (PNG, JPG, JPEG).
+Supports PDF (via pypdf), DOCX (python-docx), TXT, and Images (PNG, JPG, JPEG).
 Provides safe size validation, mime validation, and clean error messages.
 """
 
@@ -25,16 +25,16 @@ def clean_text(text: str) -> str:
 
 
 def extract_text_from_pdf(file_path: Path) -> Dict[str, Any]:
-    """Extract text from PDF using PyMuPDF (fitz) or fallback."""
+    """Extract selectable text from a PDF with the lightweight pypdf package."""
     try:
-        import pymupdf as fitz
-        doc = fitz.open(str(file_path))
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(file_path))
         pages = []
-        for idx, page in enumerate(doc):
-            t = page.get_text("text")
+        for idx, page in enumerate(reader.pages):
+            t = page.extract_text() or ""
             if t.strip():
                 pages.append(f"--- Page {idx + 1} ---\n{t.strip()}")
-        doc.close()
         
         extracted = clean_text("\n\n".join(pages))
         if not extracted or len(re.findall(r"[a-zA-Z0-9]", extracted)) < 15:
@@ -43,7 +43,7 @@ def extract_text_from_pdf(file_path: Path) -> Dict[str, Any]:
                 "text": extracted,
                 "error": "This PDF document appears to be scanned or contains only images without readable text.",
                 "file_type": "PDF",
-                "page_count": len(pages) or 1
+                "page_count": len(reader.pages) or 1
             }
             
         return {
@@ -51,7 +51,7 @@ def extract_text_from_pdf(file_path: Path) -> Dict[str, Any]:
             "text": extracted,
             "error": None,
             "file_type": "PDF",
-            "page_count": len(pages)
+            "page_count": len(reader.pages)
         }
     except Exception as e:
         return {

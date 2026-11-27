@@ -1,6 +1,6 @@
 """Document text extraction module for question papers.
 
-Supports PDF (via PyMuPDF / fitz), DOCX (via python-docx), and TXT formats.
+Supports PDF (via pypdf), DOCX (via python-docx), and TXT formats.
 Detects image-only / scanned documents cleanly without crashing.
 """
 
@@ -30,36 +30,27 @@ def normalize_extracted_text(text: str) -> str:
 
 
 def extract_from_pdf(file_path: Path) -> dict:
-    """Extract text from a PDF document using PyMuPDF (fitz) or pypdf fallback."""
+    """Extract selectable text from a PDF using pypdf."""
     full_text = []
     page_count = 0
     
     try:
-        import pymupdf as fitz
-        doc = fitz.open(str(file_path))
-        page_count = len(doc)
-        for page in doc:
-            full_text.append(page.get_text("text"))
-        doc.close()
-    except Exception as e_fitz:
-        # Fallback to pypdf if PyMuPDF encounters an unexpected issue
-        try:
-            import pypdf
-            reader = pypdf.PdfReader(str(file_path))
-            page_count = len(reader.pages)
-            for page in reader.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    full_text.append(extracted)
-        except Exception as e_pypdf:
-            return {
-                "success": False,
-                "text": "",
-                "page_count": 0,
-                "file_type": "PDF",
-                "is_scanned": False,
-                "error": f"Failed to read PDF file: {e_fitz}"
-            }
+        from pypdf import PdfReader
+        reader = PdfReader(str(file_path))
+        page_count = len(reader.pages)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                full_text.append(extracted)
+    except Exception as error:
+        return {
+            "success": False,
+            "text": "",
+            "page_count": 0,
+            "file_type": "PDF",
+            "is_scanned": False,
+            "error": f"Failed to read PDF file: {error}"
+        }
 
     raw_text = "\n".join(full_text)
     cleaned_text = normalize_extracted_text(raw_text)

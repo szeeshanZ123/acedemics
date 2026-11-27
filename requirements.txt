@@ -1,9 +1,7 @@
 pandas
 Flask
 numpy
-scikit-learn
-joblib
-pymupdf
+pypdf
 python-docx
 reportlab
 Pillow

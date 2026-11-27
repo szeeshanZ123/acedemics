@@ -86,7 +86,7 @@ Historical Marks + Attendance
            ↓
    Data Preprocessing
            ↓
-Random Forest ML Model
+Historical Cohort Regression Estimate
            ↓
 Predicted Next Exam Score
            ↓
@@ -95,7 +95,7 @@ Custom Study Recommendations
 Plaintext
 Upload Exam PDF
       ↓
-Extract Text with PyMuPDF
+Extract Text with pypdf
       ↓
 Detect Questions & Marks
       ↓
@@ -105,11 +105,11 @@ Generate Exam Quality Report
 🛠️ Built With
 Backend: Python, Flask
 
-Machine Learning & Data: Scikit-Learn (Random Forest), Pandas, NumPy
+Machine Learning & Data: Pandas and NumPy; prototype forecasts use a lightweight historical cohort regression. Optional Random Forest training is available separately.
 
 Frontend: HTML5, CSS3, JavaScript, Bootstrap
 
-Document Processing: PyMuPDF (PDF text extraction), ReportLab (PDF export)
+Document Processing: pypdf (PDF text extraction), python-docx (Word files), ReportLab (PDF export)
 
 Hosting: Vercel
 
@@ -148,6 +148,8 @@ pip install -r requirements.txt
 Bash
 python app.py
 Open your browser and visit: http://127.0.0.1:5000
+
+Optional development packages: install `requirements-dev.txt` to use the local Random Forest training, PDF test-generation, and chart-generation tools. The Vercel prototype uses the smaller base dependency list and a built-in historical cohort estimate.
 
 🛡️ Production Roadmap
 To transition this prototype into a full institution-wide application:

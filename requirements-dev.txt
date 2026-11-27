@@ -1,0 +1,3 @@
+-r requirements-ml-training.txt
+-r requirements-visualization.txt
+pymupdf

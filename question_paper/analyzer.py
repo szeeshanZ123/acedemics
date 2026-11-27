@@ -7,10 +7,9 @@ and data-grounded academic insights.
 """
 
 import re
+import math
+from collections import Counter
 from typing import List, Dict, Any, Optional
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
 
 
 # ----------------------------------------------------------------------
@@ -459,7 +458,7 @@ def estimate_question_difficulty(
 # ----------------------------------------------------------------------
 def extract_keywords_and_clusters(questions: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Perform TF-IDF keyword extraction and unsupervised KMeans topic clustering.
+    Extract TF-IDF-like keywords and group similar questions without ML packages.
     """
     if not questions:
         return {
@@ -468,72 +467,52 @@ def extract_keywords_and_clusters(questions: List[Dict[str, Any]]) -> Dict[str, 
             "processed_questions": []
         }
 
-    docs = [q["text"] for q in questions]
+    docs = [q.get("text", "") for q in questions]
     n_docs = len(docs)
-
-    custom_stop_words = [
+    custom_stop_words = {
         "question", "marks", "explain", "describe", "define", "what", "write",
         "answer", "following", "following:", "diagram", "diagrams", "example",
         "examples", "state", "list", "discuss", "detail", "details", "short", "note",
         "given", "using", "suitable", "differentiate", "distinguish", "difference"
-    ]
+    }
+    common_words = {
+        "the", "and", "for", "with", "from", "into", "that", "this", "these", "those",
+        "what", "when", "where", "which", "who", "whom", "whose", "will", "would", "could",
+        "should", "shall", "have", "has", "had", "are", "was", "were", "been", "being",
+        "your", "their", "them", "they", "then", "than", "there", "here", "also", "each",
+        "such", "some", "more", "most", "many", "much", "only", "very", "between", "using"
+    }
+    blocked_words = common_words | {word.rstrip(":") for word in custom_stop_words}
 
-    try:
-        tfidf = TfidfVectorizer(
-            stop_words="english",
-            max_df=0.95,
-            min_df=1,
-            ngram_range=(1, 2),
-            token_pattern=r"(?u)\b[a-zA-Z_][a-zA-Z0-9_-]+\b"
-        )
-        tfidf_matrix = tfidf.fit_transform(docs)
-        feature_names = np.array(tfidf.get_feature_names_out())
-        
-        filtered_indices = [
-            i for i, fn in enumerate(feature_names)
-            if fn.lower() not in custom_stop_words and len(fn) > 2
+    def tokenize(text: str) -> List[str]:
+        return [
+            token.lower() for token in re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_-]+\b", text)
+            if len(token) > 2 and token.lower() not in blocked_words
         ]
-        if not filtered_indices:
-            filtered_indices = list(range(len(feature_names)))
 
-    except Exception:
-        for q in questions:
-            q["keywords"] = [w for w in re.findall(r"\b[a-zA-Z]{4,}\b", q["text"].lower()) if w not in custom_stop_words][:3]
-            q["topic_group"] = "General Topic"
-        return {
-            "top_paper_keywords": ["Academic Exam", "Questions"],
-            "topic_clusters": [{"name": "General Topic", "top_terms": ["Exam Topics"], "count": len(questions), "percentage": 100.0}],
-            "processed_questions": questions
-        }
+    token_docs = [tokenize(doc) for doc in docs]
+    doc_counts = [Counter(tokens) for tokens in token_docs]
+    document_frequency = Counter(term for counts in doc_counts for term in counts)
+    vectors: List[Dict[str, float]] = []
+    for counts in doc_counts:
+        vector = {}
+        for term, frequency in counts.items():
+            tf = 1.0 + math.log(frequency)
+            idf = math.log((1 + n_docs) / (1 + document_frequency[term])) + 1.0
+            vector[term] = tf * idf
+        vectors.append(vector)
 
-    # Extract top keywords per question
-    for i, q in enumerate(questions):
-        row = tfidf_matrix[i].toarray().flatten()
-        for idx in range(len(row)):
-            if feature_names[idx].lower() in custom_stop_words or len(feature_names[idx]) <= 2:
-                row[idx] = 0.0
+    for question, vector, counts in zip(questions, vectors, doc_counts):
+        question["keywords"] = [term for term, _ in sorted(vector.items(), key=lambda item: item[1], reverse=True)[:4]]
+        if not question["keywords"]:
+            question["keywords"] = list(counts.keys())[:3]
 
-        top_indices = row.argsort()[::-1][:4]
-        q_keywords = [feature_names[idx] for idx in top_indices if row[idx] > 0]
-        
-        if not q_keywords:
-            raw_words = [w for w in re.findall(r"\b[a-zA-Z]{4,}\b", q["text"].lower()) if w not in custom_stop_words]
-            q_keywords = list(dict.fromkeys(raw_words))[:3]
-            
-        q["keywords"] = q_keywords
+    mean_scores = Counter()
+    for vector in vectors:
+        mean_scores.update({term: weight / n_docs for term, weight in vector.items()})
+    top_paper_keywords = [term for term, _ in mean_scores.most_common(10)]
 
-    # Extract top overall paper keywords
-    mean_scores = tfidf_matrix.toarray().mean(axis=0)
-    for idx in range(len(mean_scores)):
-        if feature_names[idx].lower() in custom_stop_words or len(feature_names[idx]) <= 2:
-            mean_scores[idx] = 0.0
-
-    top_paper_indices = mean_scores.argsort()[::-1][:10]
-    top_paper_keywords = [
-        feature_names[idx] for idx in top_paper_indices if mean_scores[idx] > 0
-    ]
-
-    # Unsupervised Topic Clustering
+    # Deterministic farthest-first representatives form small, useful topic groups.
     if n_docs >= 8:
         k = min(4, max(2, n_docs // 4))
     elif n_docs >= 4:
@@ -542,48 +521,57 @@ def extract_keywords_and_clusters(questions: List[Dict[str, Any]]) -> Dict[str, 
         k = 1
 
     topic_clusters = []
-    if k > 1 and len(feature_names) >= k:
-        try:
-            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
-            cluster_labels = kmeans.fit_predict(tfidf_matrix)
-            order_centroids = kmeans.cluster_centers_.argsort()[:, ::-1]
-            
-            for c_id in range(k):
-                c_terms = []
-                for ind in order_centroids[c_id]:
-                    term = feature_names[ind]
-                    if term.lower() not in custom_stop_words and len(term) > 2 and term not in c_terms:
-                        c_terms.append(term)
-                    if len(c_terms) >= 4:
-                        break
-                
-                c_count = int(np.sum(cluster_labels == c_id))
-                c_pct = round((c_count / n_docs) * 100, 1) if n_docs > 0 else 0
-                topic_clusters.append({
-                    "cluster_id": c_id + 1,
-                    "name": f"Topic Group {c_id + 1}",
-                    "top_terms": c_terms if c_terms else ["General Concepts"],
-                    "count": c_count,
-                    "percentage": c_pct
-                })
+    if k <= 1 or not top_paper_keywords:
+        cluster_labels = [0] * n_docs
+    else:
+        norms = [math.sqrt(sum(weight * weight for weight in vector.values())) for vector in vectors]
 
-            for i, q in enumerate(questions):
-                q["topic_group"] = f"Topic Group {cluster_labels[i] + 1}"
+        def similarity(left: Dict[str, float], right: Dict[str, float], left_norm: float, right_norm: float) -> float:
+            if not left_norm or not right_norm:
+                return 0.0
+            if len(left) > len(right):
+                left, right = right, left
+            dot = sum(weight * right.get(term, 0.0) for term, weight in left.items())
+            return dot / (left_norm * right_norm)
 
-        except Exception:
-            k = 1
+        seed_indices = [max(range(n_docs), key=lambda index: (len(vectors[index]), sum(vectors[index].values())))]
+        while len(seed_indices) < min(k, n_docs):
+            remaining = [index for index in range(n_docs) if index not in seed_indices]
+            next_seed = min(
+                remaining,
+                key=lambda index: max(
+                    similarity(vectors[index], vectors[seed], norms[index], norms[seed])
+                    for seed in seed_indices
+                ),
+            )
+            seed_indices.append(next_seed)
 
-    if k == 1 or not topic_clusters:
-        top_terms = top_paper_keywords[:4] if top_paper_keywords else ["General Concepts"]
-        topic_clusters = [{
-            "cluster_id": 1,
-            "name": "Topic Group 1",
+        cluster_labels = [
+            max(
+                range(len(seed_indices)),
+                key=lambda cluster: similarity(
+                    vectors[index], vectors[seed_indices[cluster]], norms[index], norms[seed_indices[cluster]]
+                ),
+            )
+            for index in range(n_docs)
+        ]
+
+    for cluster_id in sorted(set(cluster_labels)):
+        members = [index for index, label in enumerate(cluster_labels) if label == cluster_id]
+        cluster_terms = Counter()
+        for index in members:
+            cluster_terms.update(vectors[index])
+        top_terms = [term for term, _ in cluster_terms.most_common(4)] or top_paper_keywords[:4] or ["General Concepts"]
+        display_id = len(topic_clusters) + 1
+        topic_clusters.append({
+            "cluster_id": display_id,
+            "name": f"Topic Group {display_id}",
             "top_terms": top_terms,
-            "count": n_docs,
-            "percentage": 100.0
-        }]
-        for q in questions:
-            q["topic_group"] = "Topic Group 1"
+            "count": len(members),
+            "percentage": round((len(members) / n_docs) * 100, 1),
+        })
+        for index in members:
+            questions[index]["topic_group"] = f"Topic Group {display_id}"
 
     return {
         "top_paper_keywords": top_paper_keywords,
